@@ -1,18 +1,22 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { operationsService, categoriesService, banksService } from '@/services';
 import { Operation, Category, Bank } from '@/types';
 import { toast } from 'react-toastify';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
-import styles from './Operations.module.css';
+import { Plus, Trash2, Loader2, ArrowLeftRight } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 export function Operations() {
   const [operations, setOperations] = useState<Operation[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [banks, setBanks] = useState<Bank[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     description: '',
@@ -35,9 +39,9 @@ export function Operations() {
         categoriesService.getAll(),
         banksService.getAll(),
       ]);
-      setOperations(opsData);
-      setCategories(catsData);
-      setBanks(banksData);
+      setOperations(opsData || []);
+      setCategories(catsData || []);
+      setBanks(banksData || []);
     } catch (error) {
       toast.error('Erro ao carregar dados');
     } finally {
@@ -48,6 +52,7 @@ export function Operations() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setSubmitting(true);
       await operationsService.create({
         ...formData,
         amount: parseFloat(formData.amount),
@@ -65,6 +70,8 @@ export function Operations() {
       loadData();
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Erro ao criar operação');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -80,56 +87,87 @@ export function Operations() {
     }
   };
 
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  };
+
   return (
     <MainLayout>
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <h1>Operações</h1>
-          <Button onClick={() => setShowForm(!showForm)} size="sm">
-            <Plus size={20} />
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+              Operações
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Gerencie suas receitas e despesas registradas
+            </p>
+          </div>
+          <Button onClick={() => setShowForm(true)} className="gap-2 shadow-lg shadow-indigo-500/20">
+            <Plus className="h-4 w-4" />
             Nova Operação
           </Button>
         </div>
 
-        {showForm && (
-          <div className={styles.form}>
-            <form onSubmit={handleSubmit}>
+        {/* Modal Dialog for Form */}
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ArrowLeftRight className="h-5 w-5 text-primary" />
+                Cadastrar Nova Operação
+              </DialogTitle>
+              <DialogDescription>
+                Preencha os detalhes da movimentação financeira.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4 py-2">
               <Input
                 label="Descrição"
+                placeholder="Ex: Pagamento de Internet"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 required
               />
 
               <Input
-                label="Valor"
+                label="Valor (R$)"
                 type="number"
                 step="0.01"
+                placeholder="0.00"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 required
               />
 
-              <div className={styles.row}>
-                <div className={styles.col}>
-                  <label>Tipo</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Tipo
+                  </label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as 'INCOME' | 'EXPENSE' })}
+                    className="flex h-10 w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="EXPENSE">Despesa</option>
                     <option value="INCOME">Receita</option>
                   </select>
                 </div>
 
-                <div className={styles.col}>
-                  <label>Categoria</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Categoria
+                  </label>
                   <select
                     value={formData.categoryId}
                     onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                     required
+                    className="flex h-10 w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   >
-                    <option value="">Selecione uma categoria</option>
+                    <option value="">Selecione</option>
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name}
@@ -138,14 +176,17 @@ export function Operations() {
                   </select>
                 </div>
 
-                <div className={styles.col}>
-                  <label>Banco</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Banco
+                  </label>
                   <select
                     value={formData.bankId}
                     onChange={(e) => setFormData({ ...formData, bankId: e.target.value })}
                     required
+                    className="flex h-10 w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   >
-                    <option value="">Selecione um banco</option>
+                    <option value="">Selecione</option>
                     {banks.map((bank) => (
                       <option key={bank.id} value={bank.id}>
                         {bank.name}
@@ -156,73 +197,85 @@ export function Operations() {
               </div>
 
               <Input
-                label="Notas"
+                label="Notas adicionais"
+                placeholder="Observações opcionais..."
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               />
 
-              <div className={styles.actions}>
-                <Button type="submit" variant="primary">
-                  Salvar
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowForm(false)}
-                >
+              <DialogFooter className="pt-4">
+                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                   Cancelar
                 </Button>
-              </div>
+                <Button type="submit" isLoading={submitting}>
+                  Salvar Operação
+                </Button>
+              </DialogFooter>
             </form>
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
 
-        {loading ? (
-          <div>Carregando...</div>
-        ) : (
-          <div className={styles.list}>
-            {operations.length > 0 ? (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Descrição</th>
-                    <th>Categoria</th>
-                    <th>Banco</th>
-                    <th>Valor</th>
-                    <th>Tipo</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
+        {/* Content Table Card */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold">Histórico de Lançamentos</CardTitle>
+            <CardDescription>
+              Lista completa de operações financeiras efetuadas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-16 text-muted-foreground gap-3">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span>Carregando operações...</span>
+              </div>
+            ) : operations.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Banco</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {operations.map((op) => (
-                    <tr key={op.id}>
-                      <td>{op.description}</td>
-                      <td>{op.category?.name}</td>
-                      <td>{op.bank?.name}</td>
-                      <td>R$ {op.amount.toFixed(2)}</td>
-                      <td>{op.type === 'INCOME' ? 'Receita' : 'Despesa'}</td>
-                      <td>{op.status}</td>
-                      <td className={styles.actions}>
-                        <button className={styles.iconBtn}>
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          className={`${styles.iconBtn} ${styles.danger}`}
+                    <TableRow key={op.id}>
+                      <TableCell className="font-medium text-foreground">{op.description}</TableCell>
+                      <TableCell className="text-muted-foreground">{op.category?.name || '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">{op.bank?.name || '—'}</TableCell>
+                      <TableCell className={`font-semibold ${op.type === 'INCOME' || (op.type as any) === 'I' ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {formatCurrency(op.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={op.type === 'INCOME' || (op.type as any) === 'I' ? 'success' : 'destructive'}>
+                          {op.type === 'INCOME' || (op.type as any) === 'I' ? 'Receita' : 'Despesa'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleDelete(op.id)}
+                          className="text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
                         >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
-                    </tr>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             ) : (
-              <p>Nenhuma operação encontrada</p>
+              <div className="text-center py-16 text-muted-foreground">
+                Nenhuma operação registrada ainda.
+              </div>
             )}
-          </div>
-        )}
+          </CardContent>
+        </Card>
       </div>
     </MainLayout>
   );

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
-import styles from './Login.module.css';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Sparkles } from 'lucide-react';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -29,39 +30,65 @@ export function Login() {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>Gestor</h1>
-        <p className={styles.subtitle}>Sistema de Gerenciamento Financeiro</p>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background text-foreground">
+      {/* Glow Effects */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <Input
-            label="Email"
-            type="email"
-            placeholder="seu@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+      <Card className="w-full max-w-md shadow-2xl border-border/80 bg-card/80 backdrop-blur-xl relative z-10">
+        <CardHeader className="text-center space-y-3 pb-6">
+          <div className="mx-auto h-12 w-12 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <Sparkles className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <CardTitle className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+              Controlfy
+            </CardTitle>
+            <CardDescription className="text-muted-foreground mt-1">
+              Gerencie suas finanças de forma simples e intuitiva
+            </CardDescription>
+          </div>
+        </CardHeader>
 
-          <Input
-            label="Senha"
-            type="password"
-            placeholder="Digite sua senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <Input
+                label="Email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-          <Button type="submit" isLoading={loading} size="lg">
-            Entrar
-          </Button>
-        </form>
+            <div className="space-y-1">
+              <Input
+                label="Senha"
+                type="password"
+                placeholder="Digite sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
 
-        <p className={styles.footer}>
-          Não tem conta? <Link to="/register">Cadastre-se aqui</Link>
-        </p>
-      </div>
+            <Button type="submit" isLoading={loading} size="lg" className="w-full mt-2">
+              Entrar na conta
+            </Button>
+          </form>
+        </CardContent>
+
+        <CardFooter className="flex justify-center border-t border-border/60 pt-4">
+          <p className="text-xs text-muted-foreground">
+            Não tem uma conta?{' '}
+            <Link to="/register" className="font-semibold text-primary hover:underline">
+              Cadastre-se aqui
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
