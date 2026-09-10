@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import { useAuth } from "@/context/AuthContext";
+import Login from "@/pages/Login";
 
 
 export default function AppRoutes() {
@@ -13,8 +14,8 @@ export default function AppRoutes() {
   return (
     <Routes>
         {/* Rota pública */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-
+        <Route path="/" element={<Login />} />
+            
       {/* Rota fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
