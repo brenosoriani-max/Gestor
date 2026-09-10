@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 
 import api from "../services/api";
 import axios from "axios";
-import brandIcon from "../assets/react.svg";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
+import logo from "../../public/logo.png";
+import main from "../../public/main.svg";
 
 export default function Login() {
   const { user } = useAuth();
@@ -52,35 +53,21 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-green-100 text-slate-900">
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[4fr_5fr]">
-        <main className="flex items-center justify-center p-6 sm:p-10 lg:p-14">
-          <div className="w-full max-w-3xl">
-            <h1 className="max-w-xl text-4xl font-bold leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-              Sistema de{" "}
-              <span className="text-emerald-600">atendimento</span>
-            </h1>
-
-            <div className="mt-6 inline-flex items-center rounded-full border border-emerald-200 bg-white/80 px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm">
-              Gestão inteligente
-            </div>
-
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">
-              Centralize sua operação em um só lugar. Acompanhe chamados,
-              organize equipes e mantenha cada atendimento com visibilidade total
-              em tempo real.
-            </p>
-
-            <div className="mt-10 rounded-[28px] border border-emerald-100 bg-white/80 p-6 shadow-[0_20px_50px_rgba(16,185,129,0.08)] backdrop-blur-sm">
-              <p className="text-2xl font-semibold text-slate-800">
-                Mais agilidade para sua operação.
-              </p>
-            </div>
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[5fr_4fr]">
+        <main>
+          <div className="w-full h-full  overflow-hidden  shadow-lg">
+            <img src={main} alt="imagem principal" className="w-full h-full object-cover" />
           </div>
         </main>
 
-        <aside className="flex items-center justify-center bg-white p-6 sm:p-8 lg:p-10">
+        <aside className="flex items-center justify-center bg-gray p-6 sm:p-8 lg:p-10">
           <div className="w-full max-w-md">
             <div className="mb-8 text-center">
+
+                <div className="mx-auto mb-6 flex h-16 w-50  items-center justify-center rounded-full">
+                  <img src={logo} alt="" />
+                </div>
+
               <h2 className="text-3xl font-bold text-slate-900">
                 Bem-vindo de volta
               </h2>
