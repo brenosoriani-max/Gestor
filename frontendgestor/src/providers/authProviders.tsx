@@ -14,9 +14,6 @@ export type AuthContextType = {
   loading: boolean;
 };
 
-//Guarda os dados do usuario no contexto e no localStorage, e também remove os dados do usuário do contexto e do localStorage ao fazer logout. 
-// Além disso, ele verifica se há um token válido no localStorage ao carregar o aplicativo e busca os dados do usuário correspondente.
-
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -24,35 +21,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    console.log("Token no localStorage:", token);
 
-    if (token) {
-      try {
-        const decoded = jwtDecode<{ sub: string }>(token);
-        console.log("Token decodificado no useEffect:", decoded);
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-        api.defaults.headers.common.Authorization = `Bearer ${token}`;
+    try {
+      const decoded = jwtDecode<{ sub: string }>(token);
+      api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
-        api
-          .get<User>(`/clientes/${decoded.sub}`)
-          .then((response) => {
-            console.log("Usuário obtido no useEffect:", response.data);
-            setUser(response.data);
-          })
-          .catch((err) => {
-            console.error(
-              "Erro ao buscar usuário no useEffect:",
-              err.response?.data || err.message
-            );
-            logout();
-          })
-          .finally(() => setLoading(false));
-      } catch (error) {
-        console.error("Erro ao decodificar token no useEffect:", error);
-        logout();
-        setLoading(false);
-      }
-    } else {
+      api
+        .get<User>(`/users/${decoded.sub}`)
+        .then((response) => {
+          setUser(response.data);
+        })
+        .catch((err) => {
+          console.error(
+            "Erro ao buscar usuário no useEffect:",
+            err.response?.data || err.message
+          );
+          logout();
+        })
+        .finally(() => setLoading(false));
+    } catch (error) {
+      console.error("Erro ao decodificar token no useEffect:", error);
+      logout();
       setLoading(false);
     }
   }, []);
@@ -63,10 +57,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
     api
-      .get<User>(`/clientes/${decoded.sub}`)
+      .get<User>(`/users/${decoded.sub}`)
       .then((response) => {
         setUser(response.data);
-        navigate("/profile");
+        navigate("/dashboard");
       })
       .catch((err) => {
         console.error(

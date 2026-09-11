@@ -10,7 +10,7 @@ const router = Router();
 
 router.post('/operations', createOperationFactory);
 
-router.get('/operations/:UserId', getOperationsByUserFactory);
+router.get('/operations/:idUser', getOperationsByUserFactory);
 
 router.get('/operations', listOperationFactory);
 

@@ -47,7 +47,7 @@ export default function Login() {
 
   useEffect(() => {
     if (user) {
-      window.location.href = "/home";
+      window.location.href = "/dashboard";
     }
   }, [user]);
 
