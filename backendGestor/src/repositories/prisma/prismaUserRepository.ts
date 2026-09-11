@@ -37,6 +37,14 @@ export class PrismaUserRepository implements usersRepository {
     return users;
   }
 
+
+  async updatePassword(id: string, password: string): Promise<Users> {
+  return await prisma.users.update({
+    where: { id },
+    data: { password },
+  });
+}
+
   async update(id: string, email: string, password: string): Promise<Users> {
     const user = await prisma.users.update({
       where: {

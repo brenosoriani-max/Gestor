@@ -1,0 +1,166 @@
+import { useEffect, useState } from "react";
+
+import api from "../services/api";
+import axios from "axios";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { toast } from "react-toastify";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import logo from "../../public/logo.png";
+import main from "../../public/main.svg";
+import {type Role } from "../types/Role";
+
+export default function Register() {
+  const { user } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [name, setName] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await api.post("/users", {
+        name,
+        email,
+        password: senha,
+        role: "FREE" as Role, 
+      });
+
+      
+      response.data && toast.success("Conta criada com sucesso! Faça login para continuar.");
+
+      window.location.href = "/dashboard";
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          "Erro ao fazer login";
+        toast.error(message);
+        console.error("Erro ao fazer login:", message);
+      } else {
+        toast.error("Erro desconhecido ao fazer login");
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      window.location.href = "/dashboard";
+    }
+  }, [user]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-green-100 text-slate-900">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[5fr_4fr]">
+        <main>
+          <div className="w-full h-full  overflow-hidden  shadow-lg">
+            <img src={main} alt="imagem principal" className="w-full h-full object-cover" />
+          </div>
+        </main>
+
+        <aside className="flex items-center justify-center bg-gray p-6 sm:p-8 lg:p-10">
+          <div className="w-full max-w-md">
+            <div className="mb-8 text-center">
+
+                <div className="mx-auto mb-6 flex h-16 w-50  items-center justify-center rounded-full">
+                  <img src={logo} alt="" />
+                </div>
+
+              <h2 className="text-3xl font-bold text-slate-900">
+                Crie sua conta
+              </h2>
+              <p className="mt-2 text-base text-slate-600">
+               Crie sua conta para acessar o sistema e gerenciar suas tarefas de forma eficiente.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+
+                <div className="space-y-2">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-slate-700"
+                >
+                  Nome
+                </label>
+                <Input
+                  id="name"
+                  type="name"
+                  placeholder="Seu nome"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="border-0 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:outline-none"
+                  autoComplete="name"
+                  required
+                />
+                </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-slate-700"
+                >
+                  E-mail
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="border-0 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:outline-none"
+                  autoComplete="email"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-slate-700"
+                  >
+                    Senha
+                  </label>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  className="border-0 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:outline-none"
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-emerald-500 text-white hover:bg-emerald-600 shadow-none"
+                size="lg"
+              >
+                Criar
+              </Button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-slate-600">
+              Já possui uma conta?{" "}
+              <Link
+                to="/login"
+                className="font-semibold text-emerald-700 hover:text-emerald-600"
+              >
+                faça login
+              </Link>
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}

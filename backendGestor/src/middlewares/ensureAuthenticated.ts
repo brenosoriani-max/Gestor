@@ -12,7 +12,7 @@ export interface TokenPayload {
 }
 
 const FREE_ROUTES = {
-  POST: ['/users', '/login'],
+  POST: ['/users', '/login', '/reset-password'],
 };
 
 export function ensureAuthenticated(
