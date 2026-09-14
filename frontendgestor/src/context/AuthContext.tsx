@@ -4,7 +4,7 @@ import { type User } from "@/types/User";
 export type Role = "ADMIN" | "USER" | "TECNICO";
 
 export type AuthContextType = {
-  user: User | null; // User completo
+  user: User | null;
   login: (token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;

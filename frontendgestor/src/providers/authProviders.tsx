@@ -19,6 +19,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  console.log(user?.name)
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -32,9 +34,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
       api
-        .get<User>(`/users/${decoded.sub}`)
+        .get<{ user: User }>(`/users/${decoded.sub}`)
         .then((response) => {
-          setUser(response.data);
+          setUser(response.data.user);
         })
         .catch((err) => {
           console.error(
@@ -57,9 +59,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
     api
-      .get<User>(`/users/${decoded.sub}`)
+      .get<{ user: User }>(`/users/${decoded.sub}`)
       .then((response) => {
-        setUser(response.data);
+        setUser(response.data.user);
         navigate("/dashboard");
       })
       .catch((err) => {

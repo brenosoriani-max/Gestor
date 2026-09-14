@@ -59,10 +59,6 @@ import {
 } from "@/components/ui/sidebar";
 
 
-// ======================================================
-// TIPOS
-// ======================================================
-
 type Report = {
   id: string;
   idUser: string;
@@ -86,10 +82,6 @@ type Operation = {
 };
 
 
-// ======================================================
-// FORMATADORES
-// ======================================================
-
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
@@ -102,9 +94,6 @@ const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
 const PIE_COLORS = ["#22c55e", "#ef4444"];
 
 
-// ======================================================
-// UTILITÁRIOS
-// ======================================================
 
 function makeLastSixMonths() {
   const months: Array<{
@@ -141,9 +130,6 @@ function formatCurrency(value: unknown) {
 }
 
 
-// ======================================================
-// DASHBOARD
-// ======================================================
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -153,9 +139,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
 
-  // ====================================================
-  // BUSCAR DADOS
-  // ====================================================
+
 
   useEffect(() => {
     if (!user?.id) {
@@ -185,20 +169,15 @@ export default function Dashboard() {
         // RELATÓRIOS
         // -----------------------------
 
-        const reportsData = Array.isArray(
-          reportsResponse.data?.reports
-        )
+        const reportsData = Array.isArray(reportsResponse.data?.reports)
           ? reportsResponse.data.reports
-          : Array.isArray(reportsResponse.data?.data)
-            ? reportsResponse.data.data
-            : [];
+          : Array.isArray(reportsResponse.data?.reports)
+            ? reportsResponse.data.reports
+            : Array.isArray(reportsResponse.data?.data)
+              ? reportsResponse.data.data
+              : [];
 
         setReports(reportsData);
-
-
-        // -----------------------------
-        // OPERAÇÕES
-        // -----------------------------
 
         const operationsData = Array.isArray(
           operationsResponse.data?.operations
@@ -227,10 +206,6 @@ export default function Dashboard() {
   }, [user?.id]);
 
 
-  // ====================================================
-  // RESUMO
-  // ====================================================
-
   const summary = useMemo(() => {
     const reportIncome = reports.reduce(
       (sum, item) => sum + Number(item.income || 0),
@@ -258,12 +233,6 @@ export default function Dashboard() {
         0
       );
 
-
-    /*
-     * Se existirem relatórios, usamos os relatórios.
-     * Caso contrário, usamos as operações.
-     */
-
     const totalIncome =
       reports.length > 0
         ? reportIncome
@@ -289,10 +258,6 @@ export default function Dashboard() {
     };
   }, [reports, operations]);
 
-
-  // ====================================================
-  // GRÁFICO DE RELATÓRIOS
-  // ====================================================
 
   const monthlyChartData = useMemo(() => {
     const lastSixMonths = makeLastSixMonths();
@@ -326,10 +291,6 @@ export default function Dashboard() {
     return chartData;
   }, [reports]);
 
-
-  // ====================================================
-  // GRÁFICO DE OPERAÇÕES
-  // ====================================================
 
   const operationsChartData = useMemo(() => {
     const lastSixMonths = makeLastSixMonths();
@@ -384,9 +345,7 @@ export default function Dashboard() {
   }, [operations]);
 
 
-  // ====================================================
-  // GRÁFICO DE PIZZA
-  // ====================================================
+
 
   const pieData = useMemo(
     () => [
@@ -407,11 +366,6 @@ export default function Dashboard() {
     [summary]
   );
 
-
-  // ====================================================
-  // ÚLTIMAS OPERAÇÕES
-  // ====================================================
-
   const recentOperations = useMemo(
     () =>
       [...operations]
@@ -430,9 +384,6 @@ export default function Dashboard() {
   );
 
 
-  // ====================================================
-  // LOADING
-  // ====================================================
 
   if (loading) {
     return (
@@ -449,9 +400,6 @@ export default function Dashboard() {
   }
 
 
-  // ====================================================
-  // SEM USUÁRIO
-  // ====================================================
 
   if (!user) {
     return (
@@ -470,19 +418,11 @@ export default function Dashboard() {
   }
 
 
-  // ====================================================
-  // INTERFACE
-  // ====================================================
+
 
   return (
     <SidebarProvider>
-
-      {/* ================================================
-          SIDEBAR
-      ================================================= */}
-
       <Sidebar>
-
         <SidebarHeader className="border-b border-slate-200 px-4 py-5">
 
           <div className="flex items-center gap-3">
@@ -586,16 +526,10 @@ export default function Dashboard() {
       </Sidebar>
 
 
-      {/* ================================================
-          CONTEÚDO
-      ================================================= */}
-
       <SidebarInset className="bg-slate-50">
 
 
-        {/* HEADER */}
-
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-4 shadow-sm md:px-6">
+        <header className="sticky top-0 z-10 flex items-center justify-between  bg-white px-4 py-4 shadow-sm md:px-6">
 
           <div className="flex items-center gap-3">
 
@@ -608,7 +542,7 @@ export default function Dashboard() {
               </p>
 
               <h1 className="mt-1 text-xl font-bold text-slate-900 md:text-2xl">
-                Olá, {user.name || "usuário"} 👋
+                Olá, {user.name} 👋
               </h1>
 
             </div>
@@ -616,15 +550,14 @@ export default function Dashboard() {
           </div>
 
 
-          <Button
-            variant="outline"
-            onClick={logout}
-            className="hidden gap-2 md:inline-flex"
-          >
-            <LogOut className="h-4 w-4" />
-
-            Sair
-          </Button>
+       <Button
+          variant="ghost"
+          onClick={logout}
+          className="hidden gap-2 md:inline-flex cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+      </Button>
 
         </header>
 
@@ -635,10 +568,6 @@ export default function Dashboard() {
 
           <div className="mx-auto max-w-7xl">
 
-
-            {/* ==========================================
-                CARDS
-            =========================================== */}
 
             <section className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
