@@ -1,5 +1,21 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
+
+import {
+  Activity,
+  ArrowDownRight,
+  ArrowUpRight,
+  BarChart3,
+  CreditCard,
+  LayoutDashboard,
+  LogOut,
+  PieChart as PieChartIcon,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
+
 import {
   Area,
   AreaChart,
@@ -16,21 +32,19 @@ import {
 } from "recharts";
 
 import {
-  Activity,
-  ArrowDownRight,
-  ArrowUpRight,
-  BarChart3,
-  CreditCard,
-  LayoutDashboard,
-  LogOut,
-  PiggyBank,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from "lucide-react";
-
-import api from "@/services/api";
-import { useAuth } from "@/context/AuthContext";
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 
 import { Button } from "@/components/ui/button";
 
@@ -42,425 +56,182 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-
-
-type Report = {
-  id: string;
-  idUser: string;
-  month: number;
-  income: number;
-  expenses: number;
-  createdAt: string;
-  updatedAt?: string;
-};
+/* =========================================================
+   TIPOS
+========================================================= */
 
 type Operation = {
-  id: string;
+  id: string | number;
   description: string;
   amount: number;
   type: "I" | "E";
-  idUser: string;
-  idWallet: string;
-  idCategory: string;
-  createdAt: string;
-  updatedAt?: string;
+  createdAt: string | Date;
 };
 
+type Summary = {
+  totalIncome: number;
+  totalExpenses: number;
+  balance: number;
+  totalTransactions: number;
+};
 
-const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
+/* =========================================================
+   CONSTANTES
+========================================================= */
 
-const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
-  month: "short",
-});
+const PIE_COLORS = [
+  "#22c55e",
+  "#ef4444",
+];
 
-const PIE_COLORS = ["#22c55e", "#ef4444"];
+/* =========================================================
+   FORMATAÇÃO
+========================================================= */
 
-
-
-function makeLastSixMonths() {
-  const months: Array<{
-    key: string;
-    label: string;
-    month: number;
-    year: number;
-  }> = [];
-
-  for (let index = 5; index >= 0; index -= 1) {
-    const date = new Date();
-
-    date.setDate(1);
-    date.setMonth(date.getMonth() - index);
-
-    months.push({
-      key: `${date.getFullYear()}-${String(
-        date.getMonth() + 1
-      ).padStart(2, "0")}`,
-
-      label: monthFormatter.format(date),
-
-      month: date.getMonth() + 1,
-
-      year: date.getFullYear(),
-    });
-  }
-
-  return months;
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(Number(value) || 0);
 }
 
-function formatCurrency(value: unknown) {
-  return currencyFormatter.format(Number(value) || 0);
-}
-
-
+/* =========================================================
+   COMPONENTE
+========================================================= */
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
 
-  const [reports, setReports] = useState<Report[]>([]);
-  const [operations, setOperations] = useState<Operation[]>([]);
-  const [loading, setLoading] = useState(true);
+  /* =======================================================
+     DADOS
 
+     Estes dados estão preparados para você substituir
+     posteriormente pelos dados vindos da sua API.
+  ======================================================= */
 
+  const summary: Summary = {
+    totalIncome: 0,
+    totalExpenses: 0,
+    balance: 0,
+    totalTransactions: 0,
+  };
 
+  const recentOperations: Operation[] = [];
 
-  useEffect(() => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchDashboardData = async () => {
-      try {
-        const [
-          reportsResponse,
-          operationsResponse,
-        ] = await Promise.all([
-          api.get<{
-            reports?: Report[];
-            data?: Report[];
-          }>(`/reports/${user.id}`),
-
-          api.get<{
-            operations?: Operation[];
-            data?: Operation[];
-          }>(`/operations/${user.id}`),
-        ]);
-
-
-        // -----------------------------
-        // RELATÓRIOS
-        // -----------------------------
-
-        const reportsData = Array.isArray(reportsResponse.data?.reports)
-          ? reportsResponse.data.reports
-          : Array.isArray(reportsResponse.data?.reports)
-            ? reportsResponse.data.reports
-            : Array.isArray(reportsResponse.data?.data)
-              ? reportsResponse.data.data
-              : [];
-
-        setReports(reportsData);
-
-        const operationsData = Array.isArray(
-          operationsResponse.data?.operations
-        )
-          ? operationsResponse.data.operations
-          : Array.isArray(operationsResponse.data?.data)
-            ? operationsResponse.data.data
-            : [];
-
-        setOperations(operationsData);
-
-      } catch (error) {
-        console.error(
-          "Erro ao carregar dados do dashboard:",
-          error
-        );
-
-        setReports([]);
-        setOperations([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, [user?.id]);
-
-
-  const summary = useMemo(() => {
-    const reportIncome = reports.reduce(
-      (sum, item) => sum + Number(item.income || 0),
-      0
-    );
-
-    const reportExpenses = reports.reduce(
-      (sum, item) => sum + Number(item.expenses || 0),
-      0
-    );
-
-
-    const operationIncome = operations
-      .filter((item) => item.type === "I")
-      .reduce(
-        (sum, item) => sum + Number(item.amount || 0),
-        0
-      );
-
-
-    const operationExpenses = operations
-      .filter((item) => item.type === "E")
-      .reduce(
-        (sum, item) => sum + Number(item.amount || 0),
-        0
-      );
-
-    const totalIncome =
-      reports.length > 0
-        ? reportIncome
-        : operationIncome;
-
-    const totalExpenses =
-      reports.length > 0
-        ? reportExpenses
-        : operationExpenses;
-
-    const balance = totalIncome - totalExpenses;
-
-
-    return {
-      totalIncome,
-      totalExpenses,
-      balance,
-
-      operationIncome,
-      operationExpenses,
-
-      totalTransactions: operations.length,
-    };
-  }, [reports, operations]);
-
+  /* =======================================================
+     EVOLUÇÃO DOS ÚLTIMOS 6 MESES
+  ======================================================= */
 
   const monthlyChartData = useMemo(() => {
-    const lastSixMonths = makeLastSixMonths();
+    const now = new Date();
 
-
-    const chartData = lastSixMonths.map((month) => ({
-      ...month,
-      income: 0,
-      expenses: 0,
-    }));
-
-
-    reports.forEach((report) => {
-      const match = chartData.find(
-        (item) =>
-          item.month === Number(report.month)
+    const months = Array.from({ length: 6 }, (_, index) => {
+      const date = new Date(
+        now.getFullYear(),
+        now.getMonth() - (5 - index),
+        1
       );
 
-
-      if (!match) {
-        return;
-      }
-
-
-      match.income += Number(report.income || 0);
-
-      match.expenses += Number(report.expenses || 0);
+      return {
+        label: date.toLocaleDateString("pt-BR", {
+          month: "short",
+        }),
+        income: 0,
+        expenses: 0,
+      };
     });
 
+    return months;
+  }, []);
 
-    return chartData;
-  }, [reports]);
-
-
-  const operationsChartData = useMemo(() => {
-    const lastSixMonths = makeLastSixMonths();
-
-
-    const chartData = lastSixMonths.map((month) => ({
-      ...month,
-      income: 0,
-      expenses: 0,
-    }));
-
-
-    operations.forEach((operation) => {
-      const date = new Date(operation.createdAt);
-
-
-      if (Number.isNaN(date.getTime())) {
-        return;
-      }
-
-
-      const month = date.getMonth() + 1;
-
-      const year = date.getFullYear();
-
-
-      const match = chartData.find(
-        (item) =>
-          item.month === month &&
-          item.year === year
-      );
-
-
-      if (!match) {
-        return;
-      }
-
-
-      if (operation.type === "I") {
-        match.income += Number(
-          operation.amount || 0
-        );
-      } else {
-        match.expenses += Number(
-          operation.amount || 0
-        );
-      }
-    });
-
-
-    return chartData;
-  }, [operations]);
-
-
-
+  /* =======================================================
+     DADOS DO GRÁFICO DE PIZZA
+  ======================================================= */
 
   const pieData = useMemo(
     () => [
       {
-        name: "Entradas",
-        value:
-          summary.operationIncome ||
-          summary.totalIncome,
+        name: "Receitas",
+        value: summary.totalIncome,
       },
-
       {
-        name: "Saídas",
-        value:
-          summary.operationExpenses ||
-          summary.totalExpenses,
+        name: "Despesas",
+        value: summary.totalExpenses,
       },
     ],
-    [summary]
+    [summary.totalIncome, summary.totalExpenses]
   );
 
-  const recentOperations = useMemo(
-    () =>
-      [...operations]
-        .sort(
-          (first, second) =>
-            new Date(
-              second.createdAt
-            ).getTime() -
-            new Date(
-              first.createdAt
-            ).getTime()
-        )
-        .slice(0, 5),
+  /* =======================================================
+     FLUXO MENSAL
+  ======================================================= */
 
-    [operations]
-  );
+  const operationsChartData = useMemo(() => {
+    const now = new Date();
 
+    return Array.from({ length: 6 }, (_, index) => {
+      const date = new Date(
+        now.getFullYear(),
+        now.getMonth() - (5 - index),
+        1
+      );
 
+      return {
+        label: date.toLocaleDateString("pt-BR", {
+          month: "short",
+        }),
+        income: 0,
+        expenses: 0,
+      };
+    });
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" />
+  /* =======================================================
+     SAUDAÇÃO
+  ======================================================= */
 
-          <p className="text-sm font-medium text-slate-600">
-            Carregando dashboard...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const greeting = useMemo(() => {
+    return `Olá, ${user?.name ?? "usuário"} 👋`;
+  }, [user]);
 
-
-
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="rounded-xl border bg-white p-8 text-center shadow-sm">
-          <p className="text-lg font-semibold text-slate-900">
-            Usuário não autenticado
-          </p>
-
-          <p className="mt-2 text-sm text-slate-500">
-            Faça login para acessar o dashboard.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-
-
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
     <SidebarProvider>
+      {/* ===================================================
+          SIDEBAR
+      =================================================== */}
+
       <Sidebar>
-        <SidebarHeader className="border-b border-slate-200 px-4 py-5">
+        {/* LOGO / TOPO */}
 
-          <div className="flex items-center gap-3">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
-              <PiggyBank className="h-5 w-5" />
+        <div className="flex h-16 items-center border-b border-slate-200 px-5">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600">
+              <Wallet className="h-5 w-5 text-white" />
             </div>
 
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600">
-                Gestor
-              </p>
-
-              <p className="text-sm font-bold text-slate-900">
-                Financeiro
-              </p>
-            </div>
-
+            <span className="text-lg font-bold text-slate-900">
+              Controlfy
+            </span>
           </div>
+        </div>
 
-        </SidebarHeader>
-
+        {/* MENU */}
 
         <SidebarContent className="px-2 py-4">
-
           <SidebarGroup>
-
             <SidebarGroupLabel>
               Menu
             </SidebarGroupLabel>
 
-
             <SidebarGroupContent>
-
               <SidebarMenu>
+                {/* DASHBOARD */}
 
                 <SidebarMenuItem>
-
                   <SidebarMenuButton
                     isActive
                     className="h-10"
@@ -471,12 +242,11 @@ export default function Dashboard() {
                       Dashboard
                     </span>
                   </SidebarMenuButton>
-
                 </SidebarMenuItem>
 
+                {/* RELATÓRIOS */}
 
                 <SidebarMenuItem>
-
                   <SidebarMenuButton className="h-10">
                     <BarChart3 className="h-4 w-4" />
 
@@ -484,12 +254,11 @@ export default function Dashboard() {
                       Relatórios
                     </span>
                   </SidebarMenuButton>
-
                 </SidebarMenuItem>
 
+                {/* TRANSAÇÕES */}
 
                 <SidebarMenuItem>
-
                   <SidebarMenuButton className="h-10">
                     <CreditCard className="h-4 w-4" />
 
@@ -497,20 +266,15 @@ export default function Dashboard() {
                       Transações
                     </span>
                   </SidebarMenuButton>
-
                 </SidebarMenuItem>
-
               </SidebarMenu>
-
             </SidebarGroupContent>
-
           </SidebarGroup>
-
         </SidebarContent>
 
+        {/* FOOTER */}
 
         <SidebarFooter className="border-t border-slate-200 p-3">
-
           <Button
             variant="ghost"
             className="w-full justify-start gap-2 text-slate-600 hover:text-red-600"
@@ -520,64 +284,59 @@ export default function Dashboard() {
 
             Sair
           </Button>
-
         </SidebarFooter>
-
       </Sidebar>
 
+      {/* ===================================================
+          CONTEÚDO PRINCIPAL
+      =================================================== */}
 
       <SidebarInset className="bg-slate-50">
+        {/* =================================================
+            HEADER
+        ================================================= */}
 
-
-        <header className="sticky top-0 z-10 flex items-center justify-between  bg-white px-4 py-4 shadow-sm md:px-6">
-
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-4 shadow-sm md:px-6">
           <div className="flex items-center gap-3">
-
             <SidebarTrigger className="md:hidden" />
 
             <div>
-
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600">
                 Dashboard
               </p>
 
               <h1 className="mt-1 text-xl font-bold text-slate-900 md:text-2xl">
-                Olá, {user.name} 👋
+                {greeting}
               </h1>
-
             </div>
-
           </div>
 
+          <Button
+            variant="ghost"
+            onClick={logout}
+            className="hidden cursor-pointer gap-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 md:inline-flex"
+          >
+            <LogOut className="h-4 w-4" />
 
-       <Button
-          variant="ghost"
-          onClick={logout}
-          className="hidden gap-2 md:inline-flex cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
-        >
-          <LogOut className="h-4 w-4" />
-          Sair
-      </Button>
-
+            Sair
+          </Button>
         </header>
 
-
-        {/* MAIN */}
+        {/* =================================================
+            MAIN
+        ================================================= */}
 
         <main className="min-h-screen px-4 py-6 text-slate-900 md:px-6 lg:px-8">
-
           <div className="mx-auto max-w-7xl">
-
+            {/* =================================================
+                CARDS PRINCIPAIS
+            ================================================= */}
 
             <section className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
-
               {/* RECEITA */}
 
               <Card className="border-slate-200 shadow-sm">
-
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-
                   <CardTitle className="text-sm font-medium text-slate-600">
                     Receita total
                   </CardTitle>
@@ -585,12 +344,9 @@ export default function Dashboard() {
                   <div className="rounded-lg bg-emerald-50 p-2">
                     <ArrowUpRight className="h-4 w-4 text-emerald-600" />
                   </div>
-
                 </CardHeader>
 
-
                 <CardContent>
-
                   <div className="text-2xl font-bold text-slate-900">
                     {formatCurrency(
                       summary.totalIncome
@@ -600,18 +356,13 @@ export default function Dashboard() {
                   <p className="mt-2 text-xs text-emerald-600">
                     Total de entradas
                   </p>
-
                 </CardContent>
-
               </Card>
-
 
               {/* DESPESAS */}
 
               <Card className="border-slate-200 shadow-sm">
-
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-
                   <CardTitle className="text-sm font-medium text-slate-600">
                     Despesas
                   </CardTitle>
@@ -619,12 +370,9 @@ export default function Dashboard() {
                   <div className="rounded-lg bg-red-50 p-2">
                     <ArrowDownRight className="h-4 w-4 text-red-500" />
                   </div>
-
                 </CardHeader>
 
-
                 <CardContent>
-
                   <div className="text-2xl font-bold text-slate-900">
                     {formatCurrency(
                       summary.totalExpenses
@@ -634,18 +382,13 @@ export default function Dashboard() {
                   <p className="mt-2 text-xs text-red-500">
                     Total de saídas
                   </p>
-
                 </CardContent>
-
               </Card>
-
 
               {/* SALDO */}
 
               <Card className="border-slate-200 shadow-sm">
-
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-
                   <CardTitle className="text-sm font-medium text-slate-600">
                     Saldo líquido
                   </CardTitle>
@@ -653,12 +396,9 @@ export default function Dashboard() {
                   <div className="rounded-lg bg-sky-50 p-2">
                     <Wallet className="h-4 w-4 text-sky-600" />
                   </div>
-
                 </CardHeader>
 
-
                 <CardContent>
-
                   <div
                     className={`text-2xl font-bold ${
                       summary.balance >= 0
@@ -674,18 +414,13 @@ export default function Dashboard() {
                   <p className="mt-2 text-xs text-sky-600">
                     Resultado do período
                   </p>
-
                 </CardContent>
-
               </Card>
-
 
               {/* OPERAÇÕES */}
 
               <Card className="border-slate-200 shadow-sm">
-
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-
                   <CardTitle className="text-sm font-medium text-slate-600">
                     Operações
                   </CardTitle>
@@ -693,12 +428,9 @@ export default function Dashboard() {
                   <div className="rounded-lg bg-violet-50 p-2">
                     <Activity className="h-4 w-4 text-violet-500" />
                   </div>
-
                 </CardHeader>
 
-
                 <CardContent>
-
                   <div className="text-2xl font-bold text-slate-900">
                     {summary.totalTransactions}
                   </div>
@@ -706,27 +438,19 @@ export default function Dashboard() {
                   <p className="mt-2 text-xs text-violet-500">
                     Lançamentos registrados
                   </p>
-
                 </CardContent>
-
               </Card>
-
             </section>
 
-
-            {/* ==========================================
+            {/* =================================================
                 GRÁFICOS PRINCIPAIS
-            =========================================== */}
+            ================================================= */}
 
             <section className="mb-6 grid gap-5 lg:grid-cols-[1.6fr_1fr]">
-
-
-              {/* EVOLUÇÃO */}
+              {/* EVOLUÇÃO FINANCEIRA */}
 
               <Card className="border-slate-200 shadow-sm">
-
                 <CardHeader>
-
                   <CardTitle>
                     Evolução financeira
                   </CardTitle>
@@ -734,17 +458,13 @@ export default function Dashboard() {
                   <CardDescription>
                     Receitas e despesas dos últimos 6 meses.
                   </CardDescription>
-
                 </CardHeader>
 
-
                 <CardContent className="h-[320px]">
-
                   <ResponsiveContainer
                     width="100%"
                     height="100%"
                   >
-
                     <AreaChart
                       data={monthlyChartData}
                       margin={{
@@ -754,9 +474,7 @@ export default function Dashboard() {
                         bottom: 0,
                       }}
                     >
-
                       <defs>
-
                         <linearGradient
                           id="incomeFill"
                           x1="0"
@@ -777,7 +495,6 @@ export default function Dashboard() {
                           />
                         </linearGradient>
 
-
                         <linearGradient
                           id="expenseFill"
                           x1="0"
@@ -797,15 +514,12 @@ export default function Dashboard() {
                             stopOpacity={0.05}
                           />
                         </linearGradient>
-
                       </defs>
-
 
                       <CartesianGrid
                         strokeDasharray="4 4"
                         stroke="#e2e8f0"
                       />
-
 
                       <XAxis
                         dataKey="label"
@@ -813,7 +527,6 @@ export default function Dashboard() {
                         axisLine={false}
                         tick={{ fontSize: 12 }}
                       />
-
 
                       <YAxis
                         tickLine={false}
@@ -824,14 +537,14 @@ export default function Dashboard() {
                         }
                       />
 
-
                       <Tooltip
                         formatter={(value) => [
-                          formatCurrency(value),
+                          formatCurrency(
+                            Number(value)
+                          ),
                           "Valor",
                         ]}
                       />
-
 
                       <Area
                         type="monotone"
@@ -842,7 +555,6 @@ export default function Dashboard() {
                         name="Receitas"
                       />
 
-
                       <Area
                         type="monotone"
                         dataKey="expenses"
@@ -851,22 +563,15 @@ export default function Dashboard() {
                         strokeWidth={2}
                         name="Despesas"
                       />
-
                     </AreaChart>
-
                   </ResponsiveContainer>
-
                 </CardContent>
-
               </Card>
 
-
-              {/* PIZZA */}
+              {/* DISTRIBUIÇÃO */}
 
               <Card className="border-slate-200 shadow-sm">
-
                 <CardHeader>
-
                   <CardTitle>
                     Distribuição
                   </CardTitle>
@@ -874,22 +579,16 @@ export default function Dashboard() {
                   <CardDescription>
                     Comparação entre entradas e saídas.
                   </CardDescription>
-
                 </CardHeader>
 
-
                 <CardContent className="h-[320px]">
-
                   {pieData.every(
                     (item) => item.value === 0
                   ) ? (
-
                     <div className="flex h-full items-center justify-center">
-
                       <div className="text-center">
-
                         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-                          <PieChart className="h-6 w-6 text-slate-400" />
+                          <PieChartIcon className="h-6 w-6 text-slate-400" />
                         </div>
 
                         <p className="text-sm font-medium text-slate-600">
@@ -899,20 +598,14 @@ export default function Dashboard() {
                         <p className="mt-1 text-xs text-slate-400">
                           Registre uma operação para visualizar o gráfico.
                         </p>
-
                       </div>
-
                     </div>
-
                   ) : (
-
                     <ResponsiveContainer
                       width="100%"
                       height="100%"
                     >
-
                       <PieChart>
-
                         <Pie
                           data={pieData}
                           dataKey="value"
@@ -921,7 +614,6 @@ export default function Dashboard() {
                           outerRadius={105}
                           paddingAngle={4}
                         >
-
                           {pieData.map(
                             (entry, index) => (
                               <Cell
@@ -935,43 +627,32 @@ export default function Dashboard() {
                               />
                             )
                           )}
-
                         </Pie>
-
 
                         <Tooltip
                           formatter={(value) => [
-                            formatCurrency(value),
+                            formatCurrency(
+                              Number(value)
+                            ),
                             "Valor",
                           ]}
                         />
-
                       </PieChart>
-
                     </ResponsiveContainer>
-
                   )}
-
                 </CardContent>
-
               </Card>
-
             </section>
 
-
-            {/* ==========================================
+            {/* =================================================
                 FLUXO + OPERAÇÕES
-            =========================================== */}
+            ================================================= */}
 
             <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-
-
               {/* FLUXO */}
 
               <Card className="border-slate-200 shadow-sm">
-
                 <CardHeader>
-
                   <CardTitle>
                     Fluxo por mês
                   </CardTitle>
@@ -979,17 +660,13 @@ export default function Dashboard() {
                   <CardDescription>
                     Comparativo mensal das operações.
                   </CardDescription>
-
                 </CardHeader>
 
-
                 <CardContent className="h-[320px]">
-
                   <ResponsiveContainer
                     width="100%"
                     height="100%"
                   >
-
                     <BarChart
                       data={operationsChartData}
                       margin={{
@@ -999,19 +676,16 @@ export default function Dashboard() {
                         bottom: 0,
                       }}
                     >
-
                       <CartesianGrid
                         strokeDasharray="4 4"
                         stroke="#e2e8f0"
                       />
-
 
                       <XAxis
                         dataKey="label"
                         tickLine={false}
                         axisLine={false}
                       />
-
 
                       <YAxis
                         tickLine={false}
@@ -1021,14 +695,14 @@ export default function Dashboard() {
                         }
                       />
 
-
                       <Tooltip
                         formatter={(value) => [
-                          formatCurrency(value),
+                          formatCurrency(
+                            Number(value)
+                          ),
                           "Valor",
                         ]}
                       />
-
 
                       <Bar
                         dataKey="income"
@@ -1037,29 +711,21 @@ export default function Dashboard() {
                         name="Receitas"
                       />
 
-
                       <Bar
                         dataKey="expenses"
                         fill="#ef4444"
                         radius={[6, 6, 0, 0]}
                         name="Despesas"
                       />
-
                     </BarChart>
-
                   </ResponsiveContainer>
-
                 </CardContent>
-
               </Card>
-
 
               {/* ÚLTIMAS OPERAÇÕES */}
 
               <Card className="border-slate-200 shadow-sm">
-
                 <CardHeader>
-
                   <CardTitle>
                     Últimas movimentações
                   </CardTitle>
@@ -1067,18 +733,12 @@ export default function Dashboard() {
                   <CardDescription>
                     Operações mais recentes.
                   </CardDescription>
-
                 </CardHeader>
 
-
                 <CardContent className="space-y-3">
-
                   {recentOperations.length === 0 ? (
-
                     <div className="flex min-h-[220px] items-center justify-center">
-
                       <div className="text-center">
-
                         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
                           <Activity className="h-6 w-6 text-slate-400" />
                         </div>
@@ -1090,93 +750,76 @@ export default function Dashboard() {
                         <p className="mt-1 text-xs text-slate-400">
                           Suas operações aparecerão aqui.
                         </p>
-
                       </div>
-
                     </div>
-
                   ) : (
+                    recentOperations.map(
+                      (item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:bg-white"
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            {/* ÍCONE */}
 
-                    recentOperations.map((item) => (
+                            <div
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                                item.type === "I"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              {item.type === "I" ? (
+                                <TrendingUp className="h-4 w-4" />
+                              ) : (
+                                <TrendingDown className="h-4 w-4" />
+                              )}
+                            </div>
 
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:bg-white"
-                      >
+                            {/* DESCRIÇÃO */}
 
-                        <div className="flex min-w-0 items-center gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-slate-900">
+                                {item.description}
+                              </p>
 
-                          <div
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                              <p className="text-xs text-slate-500">
+                                {new Date(
+                                  item.createdAt
+                                ).toLocaleDateString(
+                                  "pt-BR"
+                                )}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* VALOR */}
+
+                          <span
+                            className={`ml-3 shrink-0 text-sm font-semibold ${
                               item.type === "I"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-red-100 text-red-700"
+                                ? "text-emerald-600"
+                                : "text-red-600"
                             }`}
                           >
+                            {item.type === "I"
+                              ? "+"
+                              : "-"}
 
-                            {item.type === "I" ? (
-                              <TrendingUp className="h-4 w-4" />
-                            ) : (
-                              <TrendingDown className="h-4 w-4" />
+                            {formatCurrency(
+                              item.amount
                             )}
-
-                          </div>
-
-
-                          <div className="min-w-0">
-
-                            <p className="truncate text-sm font-medium text-slate-900">
-                              {item.description}
-                            </p>
-
-                            <p className="text-xs text-slate-500">
-                              {new Date(
-                                item.createdAt
-                              ).toLocaleDateString(
-                                "pt-BR"
-                              )}
-                            </p>
-
-                          </div>
-
+                          </span>
                         </div>
-
-
-                        <span
-                          className={`ml-3 shrink-0 text-sm font-semibold ${
-                            item.type === "I"
-                              ? "text-emerald-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {item.type === "I"
-                            ? "+"
-                            : "-"}
-
-                          {formatCurrency(
-                            item.amount
-                          )}
-                        </span>
-
-                      </div>
-
-                    ))
-
+                      )
+                    )
                   )}
-
                 </CardContent>
-
               </Card>
-
             </section>
-
           </div>
-
         </main>
-
       </SidebarInset>
-
     </SidebarProvider>
   );
 }
-

@@ -5,6 +5,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import RecuperarSenha from "@/pages/RecuperarSenha";
 import Dashboard from "@/pages/Dashboard";
+import Transactions from "@/pages/Transactions";
 import { PrivateRoute } from "@/components/PrivateRoute";
 
 export default function AppRoutes() {
@@ -24,6 +25,7 @@ export default function AppRoutes() {
       {/* Rotas privadas */}
       <Route element={<PrivateRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/transactions" element={<Transactions />} />
       </Route>
 
       {/* Rota fallback */}
