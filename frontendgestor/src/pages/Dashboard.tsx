@@ -6,9 +6,6 @@ import {
   Activity,
   ArrowDownRight,
   ArrowUpRight,
-  BarChart3,
-  CreditCard,
-  LayoutDashboard,
   LogOut,
   PieChart as PieChartIcon,
   TrendingDown,
@@ -31,22 +28,10 @@ import {
   YAxis,
 } from "recharts";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 import { Button } from "@/components/ui/button";
+import Layout from "@/components/Layout";
 
 import {
   Card,
@@ -94,7 +79,6 @@ function formatCurrency(value: number) {
     currency: "BRL",
   }).format(Number(value) || 0);
 }
-
 /* =========================================================
    COMPONENTE
 ========================================================= */
@@ -199,99 +183,7 @@ export default function Dashboard() {
   ======================================================= */
 
   return (
-    <SidebarProvider>
-      {/* ===================================================
-          SIDEBAR
-      =================================================== */}
-
-      <Sidebar>
-        {/* LOGO / TOPO */}
-
-        <div className="flex h-16 items-center border-b border-slate-200 px-5">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600">
-              <Wallet className="h-5 w-5 text-white" />
-            </div>
-
-            <span className="text-lg font-bold text-slate-900">
-              Controlfy
-            </span>
-          </div>
-        </div>
-
-        {/* MENU */}
-
-        <SidebarContent className="px-2 py-4">
-          <SidebarGroup>
-            <SidebarGroupLabel>
-              Menu
-            </SidebarGroupLabel>
-
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {/* DASHBOARD */}
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive
-                    className="h-10"
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
-
-                    <span>
-                      Dashboard
-                    </span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                {/* RELATÓRIOS */}
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton className="h-10">
-                    <BarChart3 className="h-4 w-4" />
-
-                    <span>
-                      Relatórios
-                    </span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                {/* TRANSAÇÕES */}
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton className="h-10">
-                    <CreditCard className="h-4 w-4" />
-
-                    <span>
-                      Transações
-                    </span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-
-        {/* FOOTER */}
-
-        <SidebarFooter className="border-t border-slate-200 p-3">
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-2 text-slate-600 hover:text-red-600"
-            onClick={logout}
-          >
-            <LogOut className="h-4 w-4" />
-
-            Sair
-          </Button>
-        </SidebarFooter>
-      </Sidebar>
-
-      {/* ===================================================
-          CONTEÚDO PRINCIPAL
-      =================================================== */}
-
-      <SidebarInset className="bg-slate-50">
+    <Layout>
         {/* =================================================
             HEADER
         ================================================= */}
@@ -819,7 +711,9 @@ export default function Dashboard() {
             </section>
           </div>
         </main>
-      </SidebarInset>
-    </SidebarProvider>
+    </Layout>
   );
 }
+
+
+

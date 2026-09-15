@@ -6,6 +6,7 @@ import Register from "@/pages/Register";
 import RecuperarSenha from "@/pages/RecuperarSenha";
 import Dashboard from "@/pages/Dashboard";
 import Transactions from "@/pages/Transactions";
+import Wallets from "@/pages/Wallets";
 import { PrivateRoute } from "@/components/PrivateRoute";
 
 export default function AppRoutes() {
@@ -26,6 +27,7 @@ export default function AppRoutes() {
       <Route element={<PrivateRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/transactions" element={<Transactions />} />
+        <Route path="/wallets" element={<Wallets />} />
       </Route>
 
       {/* Rota fallback */}
